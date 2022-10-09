@@ -5,8 +5,6 @@ import { getScreenshot } from "./puppeteer";
 const isDev = !process.env.AWS_REGION;
 const isDebugHtml = !!process.env.OG_DEBUG_HTML;
 
-console.log("isDev", isDev);
-
 const rglr = readFileSync(
   `${__dirname}/fonts/PlusJakartaSans/PlusJakartaSans-Regular.woff2`
 ).toString("base64");
