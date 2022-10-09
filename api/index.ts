@@ -1,52 +1,11 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { readFileSync } from "fs";
-import chrome from "chrome-aws-lambda";
-import core from "puppeteer-core";
+import { getScreenshot } from "./puppeteer";
 
 const isDev = !process.env.AWS_REGION;
+const isDebugHtml = !!process.env.OG_DEBUG_HTML;
 
 console.log("isDev", isDev);
-
-const chromiumExecutablePath =
-  process.platform === "win32"
-    ? "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
-    : process.platform === "linux"
-    ? "/usr/bin/google-chrome"
-    : "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-
-async function getPuppeteerOptions(isDev: boolean) {
-  let options: {
-    args: string[];
-    executablePath: string;
-    headless: boolean;
-  };
-  if (isDev) {
-    options = {
-      args: [],
-      executablePath: chromiumExecutablePath,
-      headless: true,
-    };
-  } else {
-    options = {
-      args: chrome.args,
-      executablePath: await chrome.executablePath,
-      headless: chrome.headless,
-    };
-  }
-  return options;
-}
-
-let _page: core.Page | null;
-
-async function getPage(isDev: boolean) {
-  if (_page) {
-    return _page;
-  }
-  const options = await getPuppeteerOptions(isDev);
-  const browser = await core.launch(options);
-  _page = await browser.newPage();
-  return _page;
-}
 
 const rglr = readFileSync(
   `${__dirname}/fonts/PlusJakartaSans/PlusJakartaSans-Regular.woff2`
@@ -212,19 +171,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       </body>
       </html>`;
 
-    if (!isDev) {
+    if (isDebugHtml) {
       res.statusCode = 200;
       res.setHeader("Content-Type", "text/html");
       return res.end(html);
     }
-
-    const page = await getPage(isDev);
-    await page.setViewport({ width: 1200, height: 630 });
-    await page.setContent(html);
-    const file = await page.screenshot({ type: "png" });
+    const screenshot = await getScreenshot(html, isDev);
     res.statusCode = 200;
     res.setHeader("Content-Type", "image/png");
-    return res.end(file);
+    return res.end(screenshot);
   } catch (e) {
     res.statusCode = 500;
     res.setHeader("Content-Type", "text/html");

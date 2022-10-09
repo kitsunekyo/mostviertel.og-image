@@ -1,4 +1,4 @@
-.now
+.env
 .vercel
 node_modules
 api/dist
