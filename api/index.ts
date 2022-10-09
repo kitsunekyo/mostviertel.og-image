@@ -213,7 +213,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       </body>
       </html>`;
 
-    if (isDev) {
+    if (!isDev) {
       res.statusCode = 200;
       res.setHeader("Content-Type", "text/html");
       return res.end(html);
