@@ -1,7 +1,7 @@
-import chrome from "chrome-aws-lambda";
-import core from "puppeteer-core";
+import chromium from "chrome-aws-lambda";
+import playwright from "playwright-core";
 
-let _page: core.Page | null;
+let _page: playwright.Page | null;
 
 const chromiumExecutablePath =
   process.platform === "win32"
@@ -24,9 +24,9 @@ async function getOptions(isDev: boolean) {
     };
   } else {
     options = {
-      args: chrome.args,
-      executablePath: await chrome.executablePath,
-      headless: chrome.headless,
+      args: chromium.args,
+      executablePath: await chromium.executablePath,
+      headless: chromium.headless,
     };
   }
   return options;
@@ -39,7 +39,7 @@ async function getPage(isDev: boolean) {
   }
   const options = await getOptions(isDev);
   console.log("chromium: options received");
-  const browser = await core.launch(options);
+  const browser = await playwright.chromium.launch(options);
   _page = await browser.newPage();
   console.log("chromium: browser launched");
   return _page;
@@ -48,7 +48,7 @@ async function getPage(isDev: boolean) {
 export async function getScreenshot(html: string, isDev = false) {
   const page = await getPage(isDev);
   console.log("chromium: page received");
-  await page.setViewport({ width: 1200, height: 630 });
+  await page.setViewportSize({ width: 1200, height: 630 });
   console.log("chromium: viewport set");
   await page.setContent(html);
   console.log("chromium: content set");
