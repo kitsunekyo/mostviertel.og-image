@@ -82,7 +82,6 @@ const css = `
     padding: 0;
     height: 100vh;
     display: flex;
-    align-items: flex-end;
     justify-content: flex-end;
     flex-direction: column;
     font-family: PlusJakartaSans, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
