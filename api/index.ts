@@ -131,15 +131,12 @@ function formatDate(date: string) {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    const { title, excerpt, tags, createdAt } = req.query;
+    const { title, tags, createdAt } = req.query;
     if (Array.isArray(title)) {
       throw new Error("title must be a single value");
     }
     if (Array.isArray(createdAt)) {
       throw new Error("createdAt must be a single value");
-    }
-    if (Array.isArray(excerpt)) {
-      throw new Error("excerpt must be a single value");
     }
 
     const html = `<!DOCTYPE html>
