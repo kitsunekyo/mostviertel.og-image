@@ -176,6 +176,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const screenshot = await getScreenshot(html, isDev);
     res.statusCode = 200;
     res.setHeader("Content-Type", "image/png");
+    res.setHeader(
+      "Cache-Control",
+      `public, immutable, no-transform, s-maxage=31536000, max-age=31536000`
+    );
     return res.end(screenshot);
   } catch (e) {
     res.statusCode = 500;
