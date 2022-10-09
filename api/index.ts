@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { readFileSync } from "fs";
-import { getScreenshot } from "./puppeteer";
+import { getScreenshot } from "./chromium";
 
 const isDev = !process.env.AWS_REGION;
 const isDebugHtml = !!process.env.OG_DEBUG_HTML;
@@ -116,7 +116,7 @@ const css = `
 
 function toArray(input: string[] | string): string[] {
   if (Array.isArray(input)) return input;
-  return [...input];
+  return [input];
 }
 
 function formatDate(date: string) {
