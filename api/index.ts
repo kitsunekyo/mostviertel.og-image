@@ -5,6 +5,8 @@ import core from "puppeteer-core";
 
 const isDev = !process.env.AWS_REGION;
 
+console.log("isDev", isDev);
+
 const chromiumExecutablePath =
   process.platform === "win32"
     ? "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
