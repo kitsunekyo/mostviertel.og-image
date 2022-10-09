@@ -40,8 +40,9 @@ async function getPage(isDev: boolean) {
   const options = await getOptions(isDev);
   console.log("chromium: options received");
   const browser = await playwright.chromium.launch(options);
-  _page = await browser.newPage();
   console.log("chromium: browser launched");
+  _page = await browser.newPage();
+  console.log("chromium: new page created");
   return _page;
 }
 
