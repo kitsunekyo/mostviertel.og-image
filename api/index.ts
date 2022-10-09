@@ -1,8 +1,9 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { readFileSync } from "fs";
+import puppeteer from "puppeteer";
 
-// const isDev = !process.env.AWS_REGION;
-// const isHtmlDebug = process.env.OG_HTML_DEBUG === "1";
+const isDev = !process.env.AWS_REGION;
+
 const rglr = readFileSync(
   `${__dirname}/fonts/PlusJakartaSans/PlusJakartaSans-Regular.woff2`
 ).toString("base64");
@@ -18,44 +19,68 @@ const css = `
     src: url(data:font/woff2;charset=utf-8;base64,${rglr}) format('woff2');
   }
   @font-face {
-      font-family: 'PlusJakartaSans';
-      font-style:  normal;
-      font-weight: bold;
-      src: url(data:font/woff2;charset=utf-8;base64,${bold}) format('woff2');
+    font-family: 'PlusJakartaSans';
+    font-style:  normal;
+    font-weight: bold;
+    src: url(data:font/woff2;charset=utf-8;base64,${bold}) format('woff2');
+  }
+  :root {
+    --space: 60px;
+    --font-base: 36px;
+    --font-xl: 60px;
+    --text-secondary: #888;
   }
   * {
     box-sizing: border-box;
   }
   body {
-    position: relative;
     margin: 0;
     padding: 0;
     height: 100vh;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: flex-end;
+    justify-content: flex-end;
+    flex-direction: column;
     font-family: PlusJakartaSans, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    overflow: hidden;
+  }
+  .footer {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .footer-content {
+    font-weight: bold;
+    font-size: 28px;
+    padding: 20px var(--space);
+    text-align: right;
   }
   .border {
-    position: absolute;
-    height: 10px;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(to bottom right, #f97316, #f59e0b)
+    height: 20px;
+    background: linear-gradient(to bottom right, #f97316, #f59e0b);
+  }
+  .container {
+    padding: 0 var(--space);
   }
   h1 {
-    line-height: 1;
-    margin: 0;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    font-size: var(--font-xl);
+    margin: 0 0 .5em 0;
   }
   .excerpt {
-    max-width: 500px;
+    font-size: var(--font-base);
     overflow: hidden;
     text-overflow: ellipsis;
     line-height: 1.6;
-    color: #666;
+    color: var(--text-secondary);
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
   }
   ul, li {
@@ -63,25 +88,43 @@ const css = `
     margin: 0;
     padding: 0;
   }
-  .tags {
+  .flex {
     display: flex;
-    gap: 4px;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2rem;
+  }
+  .date {
+    font-size: var(--font-base);
+    color: var(--text-secondary);
+  }
+  .tags {
+    font-size: var(--font-base);
+    line-height: 1;
+    color: var(--text-secondary);
+    display: flex;
+    gap: .5em;
     align-items: center;
     flex-wrap: wrap;
   }
   .tag {
     background-color: rgb(243 244 246);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    line-height: 1;
-    color: #666;
+    padding: .35em .5em;
+    border-radius: .5em;
   }
 `;
 
 function toArray(input: string[] | string): string[] {
   if (Array.isArray(input)) return input;
   return [...input];
+}
+
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "long",
+    day: "2-digit",
+    year: "numeric",
+  });
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -106,52 +149,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         <style>${css}</style>
       </head>
       <body>
-        <div>
+        <div class="container">
           <h1>${title}</h1>
-          ${excerpt ? `<p class="excerpt">${excerpt}</p>` : ""}
-          <p>${createdAt}</p>
-          <ul class="tags">
-            ${toArray(tags)
-              .map((tag) => `<li class="tag">${tag}</li>`)
-              .join(" ")}
-          </ul>
+          <div class="flex">
+            <ul class="tags">
+              ${toArray(tags)
+                .map((tag) => `<li class="tag">${tag}</li>`)
+                .join(" ")}
+            </ul>
+            <span class="date">${formatDate(createdAt)}</span>
+          </div>
         </div>
-        <div class="border" />
+        <div class="footer">
+          <div class="footer-content">
+            mostviertel.tech
+          </div>
+          <div class="border">&nbsp;</div>
+        </div>
       </body>
       </html>`;
 
+    if (isDev) {
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "text/html");
+      return res.end(html);
+    }
+
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1200, height: 630 });
+    await page.setContent(html);
+    const file = await page.screenshot({ type: "png" });
     res.statusCode = 200;
-    res.setHeader("Content-Type", "text/html");
-    // res.setHeader("Content-Type", "text/html");
-    return res.end(html);
-    // return res.end("hello world");
-
-    /**
-     * receive req: blog metadata
-     * title
-     * tags
-     * createdAt
-     *
-     * generate html with og image content
-     * pass to puppeteer
-     * make screenshot
-     * respond with screenshot image + cache
-     */
-
-    // const parsedReq = parseRequest(req);
-    // const html = getHtml(parsedReq);
-    // if (isHtmlDebug) {
-    //   res.end(html);
-    //   return;
-    // }
-    // const { fileType } = parsedReq;
-    // const file = await getScreenshot(html, fileType, isDev);
-    // res.setHeader("Content-Type", `image/${fileType}`);
-    // res.setHeader(
-    //   "Cache-Control",
-    //   `public, immutable, no-transform, s-maxage=31536000, max-age=31536000`
-    // );
-    // res.end(file);
+    res.setHeader("Content-Type", "image/png");
+    return res.end(file);
   } catch (e) {
     res.statusCode = 500;
     res.setHeader("Content-Type", "text/html");
